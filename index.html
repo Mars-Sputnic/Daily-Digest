@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Digest — 每日数字生活沉淀</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:-apple-system,'PingFang SC','Helvetica Neue',sans-serif;background:#fff;color:#1a1a1a;line-height:1.5}
+button{font-family:inherit;cursor:pointer}
+input,textarea{font-family:inherit}
+.wrap{max-width:640px;margin:0 auto;padding:20px 20px 100px}
+
+/* Date row */
+.date-row{display:flex;align-items:center;gap:6px;position:relative}
+.date-btn{border:none;background:none;font-size:14px;color:#ddd;padding:0}
+.date-label{font-size:15px;font-weight:700;cursor:pointer;border-bottom:1.5px dashed #e0e0e0;padding-bottom:1px}
+.today-link{font-size:11px;color:#5B8FB9;cursor:pointer;font-weight:500}
+.settings-link{font-size:11px;color:#ddd;cursor:pointer}
+
+/* Setup banner */
+.setup-banner{margin-top:12px;padding:14px 16px;border-radius:8px;background:#FFFBEB;border:1px solid #FDE68A;font-size:13px;color:#92400E}
+.setup-banner a{color:#D97706;text-decoration:underline}
+.setup-banner code{background:#FEF3C7;padding:1px 4px;border-radius:3px;font-size:12px}
+
+/* Generate row */
+.gen-row{margin-top:12px;display:flex;align-items:center;gap:10px}
+.gen-btn{padding:6px 16px;border-radius:6px;border:none;font-size:13px;font-weight:600;color:#fff;background:#1a1a1a;transition:background .2s}
+.gen-btn:disabled{background:#ccc;cursor:wait}
+.gen-btn.done{background:#8BC6A4}
+.gen-btn.error{background:#E8A0A0}
+.gen-msg{font-size:11px;flex:1}
+
+/* Timeline */
+.timeline{margin-top:14px;margin-bottom:2px}
+.timeline-bar{display:flex;height:6px;border-radius:3px;background:#f0f0f0;overflow:hidden}
+.timeline-legend{display:flex;gap:10px;margin-top:6px;flex-wrap:wrap;align-items:center;font-size:11px;color:#666}
+.legend-dot{width:8px;height:8px;border-radius:2px;display:inline-block;flex-shrink:0}
+
+/* Filter row */
+.filter-row{display:flex;align-items:center;gap:6px;margin-top:14px;flex-wrap:wrap}
+.tag{font-size:11px;font-weight:600;padding:1px 7px;border-radius:3px;cursor:pointer;transition:all .12s;user-select:none}
+.stats{font-size:11px;color:#ccc}
+.stats-hl{color:#bbb}
+.stats-todo{color:#8BC6A4}
+.divider{border-bottom:1px solid #f5f5f5;margin-top:10px}
+
+/* Entry row */
+.entry{padding:9px 0;border-bottom:1px solid #f5f5f5}
+.entry-head{display:flex;align-items:baseline;gap:8px;cursor:pointer}
+.entry-cat{font-size:11px;font-weight:700;min-width:52px;flex-shrink:0}
+.entry-title{font-size:14px;font-weight:600;color:#1a1a1a;flex:1;line-height:1.35}
+.entry-dur{font-size:10px;font-weight:600;color:#999;background:#f5f5f5;padding:1px 6px;border-radius:3px;flex-shrink:0}
+.entry-time{font-size:11px;color:#ccc;flex-shrink:0}
+.entry-edit{font-size:11px;color:#ddd;cursor:pointer;flex-shrink:0;border:none;background:none}
+.entry-body{padding-left:60px;margin-top:2px}
+.entry-sum{font-size:12.5px;color:#999;line-height:1.5}
+.entry-take{padding-left:60px;margin-top:3px;font-size:12.5px;line-height:1.5}
+.take-label{font-size:11px;font-weight:700;color:#bbb}
+.take-text{color:#1a1a1a}
+.entry-detail{padding-left:60px;margin-top:5px;display:flex;flex-direction:column;gap:3px}
+.detail-label{font-size:11px;font-weight:700}
+.detail-text{font-size:12px;color:#666}
+.detail-link{color:#5B8FB9;text-decoration:none;border-bottom:1px solid #B8D4E3}
+.entry-del{font-size:11px;color:#e0e0e0;cursor:pointer;border:none;background:none;margin-top:2px;padding:0}
+
+/* Empty */
+.empty{text-align:center;padding:40px 0;color:#e0e0e0;font-size:13px}
+.empty-hint{font-size:12px;color:#ccc;margin-top:8px}
+
+/* FAB */
+.fab{position:fixed;bottom:24px;right:24px;width:44px;height:44px;border-radius:10px;background:#1a1a1a;color:#fff;border:none;font-size:22px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 10px rgba(0,0,0,.1);z-index:99}
+
+/* Modal */
+.overlay{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.25);backdrop-filter:blur(4px)}
+.modal{background:#fff;border-radius:12px;padding:24px 28px;width:min(440px,90vw);max-height:85vh;overflow-y:auto}
+.modal h3{margin:0 0 16px;font-size:16px;font-weight:700}
+.form-label{font-size:11px;color:#bbb;font-weight:600;margin-bottom:2px}
+.form-input{width:100%;padding:8px 10px;border-radius:6px;border:1px solid #e8e8e8;font-size:13px;outline:none;box-sizing:border-box}
+.form-input:focus{border-color:#1a1a1a}
+.form-row{margin-bottom:10px}
+.form-tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.form-tag{font-size:11px;font-weight:600;padding:2px 8px;border-radius:4px;cursor:pointer;border:1px solid #e8e8e8;transition:all .12s}
+.form-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
+.btn-cancel{padding:8px 16px;border-radius:6px;border:1px solid #e8e8e8;background:#fff;font-size:13px;color:#aaa}
+.btn-save{padding:8px 20px;border-radius:6px;border:none;background:#1a1a1a;color:#fff;font-size:13px;font-weight:600}
+.btn-save:disabled{background:#e0e0e0;cursor:default}
+
+/* Calendar */
+.cal{position:absolute;top:100%;left:0;margin-top:6px;z-index:200;background:#fff;border-radius:10px;box-shadow:0 8px 30px rgba(0,0,0,.12),0 0 0 1px rgba(0,0,0,.05);padding:12px;width:252px;user-select:none}
+.cal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:1px;text-align:center}
+.cal-day{font-size:12px;padding:5px 0;border-radius:6px;cursor:pointer}
+.cal-day:hover{background:#f5f5f5}
+.cal-day.sel{background:#1a1a1a;color:#fff}
+.cal-day.today{font-weight:700;color:#5B8FB9}
+.cal-wk{font-size:10px;color:#bbb;padding:4px 0}
+
+/* API key input */
+.api-input{width:100%;padding:8px 10px;border-radius:6px;border:1px solid #e8e8e8;font-size:12px;font-family:monospace;outline:none}
+.api-input:focus{border-color:#1a1a1a}
+</style>
+</head>
+<body>
+<div id="app"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.9/babel.min.js"></script>
+
+<script type="text/babel">
+const { useState, useEffect, useCallback, useRef } = React;
+
+/* ─── Config ─── */
+const CAT=[
+  {id:"work",l:"工作",c:"#8BC6A4"},{id:"ux_design",l:"体验设计",c:"#C4A4D4"},
+  {id:"ai_learn",l:"AI学习",c:"#E8B87A"},{id:"invest_news",l:"投资资讯",c:"#89C4CB"},
+  {id:"invest_learn",l:"投资知识",c:"#92B4DC"},{id:"entertainment",l:"娱乐",c:"#E8A0A0"},
+];
+const TYP=[{id:"browse",l:"浏览"},{id:"produce",l:"生产"},{id:"chat",l:"聊天"}];
+const TODAY=new Date().toISOString().split("T")[0];
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+
+/* ─── Storage (localStorage for web) ─── */
+function ldData(){try{const d=localStorage.getItem("dd-data");return d?JSON.parse(d):{}}catch{return {}}}
+function svData(d){try{localStorage.setItem("dd-data",JSON.stringify(d))}catch{}}
+function ldCfg(){try{const c=localStorage.getItem("dd-cfg");return c?JSON.parse(c):{}}catch{return {}}}
+function svCfg(c){try{localStorage.setItem("dd-cfg",JSON.stringify(c))}catch{}}
+
+/* ─── Helpers ─── */
+function fmtDur(min){if(!min&&min!==0)return"";if(min<1)return"<1m";if(min<60)return min+"m";const h=Math.floor(min/60),r=min%60;return r>0?h+"h"+r+"m":h+"h"}
+
+function Linkify({text}){
+  const re=/(https?:\/\/[^\s]+|(?:[\w-]+\.)+(?:com|cn|org|net|io|ai|pe|dev)(?:\/[^\s]*)?)/g;
+  const parts=[];let last=0,m;
+  while((m=re.exec(text))!==null){
+    if(m.index>last)parts.push(text.slice(last,m.index));
+    const u=m[0],h=u.startsWith("http")?u:"https://"+u;
+    parts.push(<a key={m.index} href={h} target="_blank" rel="noopener noreferrer" className="detail-link" onClick={e=>e.stopPropagation()}>{u}</a>);
+    last=m.index+u.length;
+  }
+  if(last<text.length)parts.push(text.slice(last));
+  return <>{parts}</>;
+}
+
+/* ─── AI Generate ─── */
+async function fetchScreenpipe(dateStr,spUrl){
+  const url=`${spUrl}/search?q=&limit=200&start_time=${dateStr}T00:00:00Z&end_time=${dateStr}T23:59:59Z&content_type=ocr`;
+  const res=await fetch(url);if(!res.ok)throw new Error("Screenpipe "+res.status);
+  return res.json();
+}
+
+function buildPrompt(spData){
+  const seen=new Map();
+  (spData.data||[]).forEach(d=>{
+    if(d.type!=="OCR"||!d.content)return;
+    const{app_name,window_name,text,timestamp}=d.content;
+    if(!app_name||!text||text.trim().length<10)return;
+    const key=app_name+"||"+(window_name||"");
+    if(!seen.has(key))seen.set(key,{app:app_name,win:window_name||"",texts:[],times:[]});
+    const e=seen.get(key);if(e.texts.join("").length<2000)e.texts.push(text.slice(0,500));e.times.push(timestamp);
+  });
+  const summary=[...seen.values()].map(e=>`[${e.app}] ${e.win}\nTime: ${e.times[0]} ~ ${e.times[e.times.length-1]} (${e.times.length} frames)\nContent: ${e.texts.slice(0,3).join(" | ").slice(0,600)}`).join("\n---\n");
+  const catList=CAT.map(c=>c.id+"="+c.l).join(", ");
+  return `You are a personal knowledge distillation assistant. Analyze the following screen recording data and produce a structured JSON array of activity entries.
+
+Categories: ${catList}
+Types: browse, produce, chat
+
+For each distinct activity output:
+{"title":"short title","cat":"category_id","typ":"browse|produce|chat","dur":estimated_minutes,"sum":"1-2 sentence summary","take":"core takeaway","res":"URLs one per line","todo":"items one per line","time":"approximate time"}
+
+Rules:
+- Merge related frames into single activities
+- Estimate duration from frame count and time range
+- Skip system UI noise (control center, dock, menu bar, empty frames)
+- All text in Chinese
+- Return ONLY a JSON array, no markdown, no explanation
+
+Screen data (${spData.pagination?.total||0} total frames, ${seen.size} unique windows):
+
+${summary}`;
+}
+
+async function callClaude(prompt,apiKey){
+  const res=await fetch("https://api.anthropic.com/v1/messages",{
+    method:"POST",
+    headers:{"Content-Type":"application/json","x-api-key":apiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:4000,messages:[{role:"user",content:prompt}]})
+  });
+  if(!res.ok){const err=await res.text();throw new Error(`API ${res.status}: ${err.slice(0,200)}`);}
+  const data=await res.json();
+  const text=data.content?.map(b=>b.text||"").join("")||"";
+  return JSON.parse(text.replace(/```json|```/g,"").trim());
+}
+
+/* ─── Components ─── */
+function Calendar({value,onChange,onClose}){
+  const[vy,setVy]=useState(()=>+value.slice(0,4));
+  const[vm,setVm]=useState(()=>+value.slice(5,7)-1);
+  const ref=useRef();
+  useEffect(()=>{const h=e=>{if(ref.current&&!ref.current.contains(e.target))onClose()};document.addEventListener("mousedown",h);return()=>document.removeEventListener("mousedown",h)},[onClose]);
+  const dim=new Date(vy,vm+1,0).getDate(),fd=new Date(vy,vm,1).getDay();
+  const days=[];for(let i=0;i<fd;i++)days.push(null);for(let i=1;i<=dim;i++)days.push(i);
+  const pick=d=>{onChange(`${vy}-${String(vm+1).padStart(2,"0")}-${String(d).padStart(2,"0")}`);onClose()};
+  const sd=+value.slice(8,10),smn=+value.slice(5,7)-1,sy=+value.slice(0,4);
+  const td=+TODAY.slice(8,10),tmn=+TODAY.slice(5,7)-1,ty=+TODAY.slice(0,4);
+  return(
+    <div ref={ref} className="cal">
+      <div className="cal-head">
+        <button className="date-btn" onClick={()=>{if(vm===0){setVm(11);setVy(y=>y-1)}else setVm(m=>m-1)}}>‹</button>
+        <span style={{fontSize:13,fontWeight:600}}>{vy}年{vm+1}月</span>
+        <button className="date-btn" onClick={()=>{if(vm===11){setVm(0);setVy(y=>y+1)}else setVm(m=>m+1)}}>›</button>
+      </div>
+      <div className="cal-grid">
+        {["日","一","二","三","四","五","六"].map(d=><div key={d} className="cal-wk">{d}</div>)}
+        {days.map((d,i)=>{if(!d)return<div key={"e"+i}/>;const iS=d===sd&&vm===smn&&vy===sy,iT=d===td&&vm===tmn&&vy===ty;
+          return<div key={i} className={"cal-day"+(iS?" sel":"")+(iT&&!iS?" today":"")} onClick={()=>pick(d)}>{d}</div>})}
+      </div>
+    </div>
+  );
+}
+
+function TimelineBar({entries}){
+  const tot=24*60,bc={};CAT.forEach(c=>{bc[c.id]=0});entries.forEach(e=>{if(e.dur&&bc[e.cat]!==undefined)bc[e.cat]+=e.dur});
+  const tracked=Object.values(bc).reduce((a,b)=>a+b,0);const segs=CAT.filter(c=>bc[c.id]>0);
+  return(
+    <div className="timeline">
+      <div className="timeline-bar">{segs.map(c=><div key={c.id} style={{width:(bc[c.id]/tot*100)+"%",background:c.c,transition:"width .3s"}} title={c.l+" "+fmtDur(bc[c.id])}/>)}</div>
+      <div className="timeline-legend">
+        {segs.map(c=><span key={c.id} style={{display:"flex",alignItems:"center",gap:3}}><span className="legend-dot" style={{background:c.c}}/>{c.l} {fmtDur(bc[c.id])}</span>)}
+        {tracked<tot&&<span style={{color:"#ccc"}}>空闲 {fmtDur(tot-tracked)}</span>}
+      </div>
+    </div>
+  );
+}
+
+function Row({e,onDel,onEdit}){
+  const c=CAT.find(x=>x.id===e.cat)||CAT[0];const[open,setOpen]=useState(false);
+  return(
+    <div className="entry">
+      <div className="entry-head" onClick={()=>setOpen(!open)}>
+        <span className="entry-cat" style={{color:c.c}}>{c.l}</span>
+        <span className="entry-title">{e.title}</span>
+        {e.dur>0&&<span className="entry-dur">{fmtDur(e.dur)}</span>}
+        <span className="entry-time">{e.time}</span>
+        <button className="entry-edit" onClick={ev=>{ev.stopPropagation();onEdit(e)}}>编辑</button>
+      </div>
+      <div className="entry-body"><p className="entry-sum">{e.sum}</p></div>
+      {e.take&&<div className="entry-take"><span className="take-label">结论 </span><span className="take-text">{e.take}</span></div>}
+      {open&&<div className="entry-detail">
+        {e.res&&<div><span className="detail-label" style={{color:"#89C4CB"}}>资料 </span><span className="detail-text">{e.res.split("\n").map((l,i)=><span key={i}>{i>0&&" · "}<Linkify text={l}/></span>)}</span></div>}
+        {e.todo&&<div><span className="detail-label" style={{color:"#8BC6A4"}}>TODO </span><span className="detail-text">{e.todo.split("\n").join(" · ")}</span></div>}
+        <button className="entry-del" onClick={()=>onDel(e.id)}>删除</button>
+      </div>}
+    </div>
+  );
+}
+
+function EntryForm({init,onSave,onCancel}){
+  const[f,setF]=useState(init?{title:init.title||"",sum:init.sum||"",take:init.take||"",res:init.res||"",todo:init.todo||"",cat:init.cat||"work",typ:init.typ||"browse",dur:init.dur??""}
+    :{title:"",sum:"",take:"",res:"",todo:"",cat:"work",typ:"browse",dur:""});
+  const s=k=>v=>setF(p=>({...p,[k]:typeof v==="string"?v:v.target.value}));
+  const fields=[{k:"title",l:"标题",p:"简要描述",t:"input"},{k:"sum",l:"摘要",p:"核心信息",r:2},{k:"take",l:"结论",p:"最重要的收获",r:2},{k:"res",l:"资料",p:"链接",r:1},{k:"todo",l:"TODO",p:"每行一条",r:2}];
+  return(
+    <div className="overlay" onClick={onCancel}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <h3>{init?"编辑":"新增"}</h3>
+        <div className="form-tags">{CAT.map(c=><span key={c.id} className="form-tag" onClick={()=>s("cat")(c.id)} style={{color:f.cat===c.id?"#fff":c.c,background:f.cat===c.id?c.c:"transparent",borderColor:f.cat===c.id?c.c:"#e8e8e8"}}>{c.l}</span>)}</div>
+        <div className="form-tags">{TYP.map(t=><span key={t.id} className="form-tag" onClick={()=>s("typ")(t.id)} style={{color:f.typ===t.id?"#fff":"#aaa",background:f.typ===t.id?"#bbb":"transparent",borderColor:f.typ===t.id?"#bbb":"#e8e8e8"}}>{t.l}</span>)}</div>
+        {fields.map(x=><div key={x.k} className="form-row"><div className="form-label">{x.l}</div>
+          {x.t==="input"?<input className="form-input" placeholder={x.p} value={f[x.k]} onChange={s(x.k)}/>
+          :<textarea className="form-input" style={{minHeight:x.r*24,resize:"vertical"}} placeholder={x.p} value={f[x.k]} onChange={s(x.k)}/>}
+        </div>)}
+        <div className="form-row"><div className="form-label">耗时（分钟）</div><input className="form-input" style={{width:100}} type="number" placeholder="30" value={f.dur} onChange={e=>setF(p=>({...p,dur:e.target.value===""?"":parseInt(e.target.value)||0}))}/></div>
+        <div className="form-actions"><button className="btn-cancel" onClick={onCancel}>取消</button><button className="btn-save" disabled={!f.title.trim()} onClick={()=>{if(f.title.trim())onSave(f)}}>保存</button></div>
+      </div>
+    </div>
+  );
+}
+
+function SettingsModal({cfg,onSave,onClose}){
+  const[spUrl,setSpUrl]=useState(cfg.screenpipeUrl||"http://localhost:3030");
+  const[apiKey,setApiKey]=useState(cfg.anthropicKey||"");
+  return(
+    <div className="overlay" onClick={onClose}>
+      <div className="modal" onClick={e=>e.stopPropagation()}>
+        <h3>设置</h3>
+        <div className="form-row">
+          <div className="form-label">Anthropic API Key</div>
+          <input className="api-input" type="password" value={apiKey} onChange={e=>setApiKey(e.target.value)} placeholder="sk-ant-api03-..."/>
+          <div style={{fontSize:11,color:"#ccc",marginTop:4}}>在 <a href="https://console.anthropic.com/settings/keys" target="_blank" rel="noopener" style={{color:"#5B8FB9"}}>console.anthropic.com</a> 获取</div>
+        </div>
+        <div className="form-row">
+          <div className="form-label">Screenpipe 地址</div>
+          <input className="form-input" value={spUrl} onChange={e=>setSpUrl(e.target.value)} placeholder="http://localhost:3030"/>
+          <div style={{fontSize:11,color:"#ccc",marginTop:4}}>终端运行 <code style={{background:"#f5f5f5",padding:"1px 4px",borderRadius:3,fontSize:11}}>brew install screenpipe && screenpipe</code></div>
+        </div>
+        <div className="form-actions">
+          <button className="btn-cancel" onClick={onClose}>取消</button>
+          <button className="btn-save" onClick={()=>{onSave({screenpipeUrl:spUrl,anthropicKey:apiKey});onClose()}}>保存</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── App ─── */
+function App(){
+  const[data,setData]=useState(()=>ldData());
+  const[cfg,setCfg]=useState(()=>ldCfg());
+  const[date,setDate]=useState(TODAY);
+  const[showForm,setShowForm]=useState(false);
+  const[edit,setEdit]=useState(null);
+  const[fc,setFc]=useState(null);
+  const[showPicker,setShowPicker]=useState(false);
+  const[showSettings,setShowSettings]=useState(false);
+  const[genState,setGenState]=useState("idle");
+  const[genMsg,setGenMsg]=useState("");
+
+  const persist=useCallback(nd=>{setData(nd);svData(nd)},[]);
+  const saveCfg=useCallback(nc=>{setCfg(nc);svCfg(nc)},[]);
+
+  const all=data[date]||[];
+  const entries=all.filter(e=>!fc||e.cat===fc).sort((a,b)=>(b.ts||0)-(a.ts||0));
+  const byCat={};CAT.forEach(c=>{byCat[c.id]=0});all.forEach(e=>{if(byCat[e.cat]!==undefined)byCat[e.cat]++});
+
+  const needsSetup=!cfg.anthropicKey;
+
+  function handleSave(f){const nd={...data};if(!nd[date])nd[date]=[];if(edit){nd[date]=nd[date].map(e=>e.id===edit.id?{...e,...f}:e)}else{nd[date]=[{...f,id:uid(),ts:Date.now(),time:new Date().toLocaleTimeString("zh-CN",{hour:"2-digit",minute:"2-digit"})},...nd[date]]}persist(nd);setShowForm(false);setEdit(null)}
+  function handleDel(id){const nd={...data};nd[date]=(nd[date]||[]).filter(e=>e.id!==id);persist(nd)}
+
+  async function handleGenerate(){
+    const spUrl=cfg.screenpipeUrl||"http://localhost:3030";
+    const apiKey=cfg.anthropicKey;
+    if(!apiKey){setShowSettings(true);return}
+    try{
+      setGenState("fetching");setGenMsg("正在从 Screenpipe 拉取数据...");
+      let spData;
+      try{spData=await fetchScreenpipe(date,spUrl)}catch(err){setGenState("error");setGenMsg(`无法连接 Screenpipe (${spUrl})。确保它正在运行。`);return}
+      const total=spData.pagination?.total||0;
+      if(total===0){setGenState("error");setGenMsg("Screenpipe 没有当天数据。");return}
+      setGenState("analyzing");setGenMsg(`已获取 ${total} 条数据，AI 分析中...`);
+      let results;
+      try{results=await callClaude(buildPrompt(spData),apiKey)}catch(err){setGenState("error");setGenMsg("AI 分析失败: "+err.message.slice(0,100));return}
+      if(!Array.isArray(results)||results.length===0){setGenState("error");setGenMsg("AI 未返回有效结果，请重试。");return}
+      const nd={...data};if(!nd[date])nd[date]=[];
+      const existing=nd[date].filter(e=>!e.id?.startsWith("ai_"));
+      const newE=results.map((r,i)=>({id:"ai_"+Date.now()+"_"+i,title:r.title||"未命名",cat:CAT.find(c=>c.id===r.cat)?r.cat:"work",typ:r.typ||"browse",dur:typeof r.dur==="number"?r.dur:0,sum:r.sum||"",take:r.take||"",res:r.res||"",todo:r.todo||"",time:r.time||"",ts:Date.now()+i}));
+      nd[date]=[...newE,...existing];persist(nd);
+      setGenState("done");setGenMsg(`已生成 ${newE.length} 条记录（${total} 条数据）`);
+      setTimeout(()=>setGenState("idle"),4000);
+    }catch(err){setGenState("error");setGenMsg("失败: "+err.message)}
+  }
+
+  const dStr=new Date(date+"T00:00:00").toLocaleDateString("zh-CN",{month:"numeric",day:"numeric",weekday:"short"});
+  const isToday=date===TODAY;
+
+  return(
+    <div className="wrap">
+      {/* Date row */}
+      <div className="date-row">
+        <button className="date-btn" onClick={()=>setDate(p=>{const d=new Date(p);d.setDate(d.getDate()-1);return d.toISOString().split("T")[0]})}>‹</button>
+        <span className="date-label" onClick={()=>setShowPicker(p=>!p)}>{dStr}</span>
+        <button className="date-btn" onClick={()=>setDate(p=>{const d=new Date(p);d.setDate(d.getDate()+1);return d.toISOString().split("T")[0]})}>›</button>
+        {showPicker&&<Calendar value={date} onChange={setDate} onClose={()=>setShowPicker(false)}/>}
+        <div style={{flex:1}}/>
+        <span className="settings-link" onClick={()=>setShowSettings(true)}>设置</span>
+        {!isToday&&<span className="today-link" onClick={()=>setDate(TODAY)}>今天</span>}
+      </div>
+
+      {/* Setup banner */}
+      {needsSetup&&<div className="setup-banner">
+        <strong>首次使用需要两步配置：</strong><br/>
+        ① 点击右上角「设置」填入你的 <a href="https://console.anthropic.com/settings/keys" target="_blank">Anthropic API Key</a><br/>
+        ② 电脑上安装并运行 Screenpipe：<code>brew install screenpipe && screenpipe</code>
+      </div>}
+
+      {/* Generate */}
+      <div className="gen-row">
+        <button className={"gen-btn"+(genState==="done"?" done":"")+(genState==="error"?" error":"")} disabled={genState==="fetching"||genState==="analyzing"} onClick={handleGenerate}>
+          {genState==="fetching"?"拉取数据中...":genState==="analyzing"?"AI 分析中...":genState==="done"?"✓ 生成完成":genState==="error"?"重试":"⚡ 生成今日记录"}
+        </button>
+        {genMsg&&genState!=="idle"&&<span className="gen-msg" style={{color:genState==="error"?"#dc2626":genState==="done"?"#16a34a":"#999"}}>{genMsg}</span>}
+      </div>
+
+      <TimelineBar entries={all}/>
+
+      {/* Filters + stats */}
+      <div className="filter-row">
+        <span className="tag" onClick={()=>setFc(null)} style={{color:!fc?"#fff":"#bbb",background:!fc?"#ccc":"transparent"}}>全部</span>
+        {CAT.map(c=>byCat[c.id]>0&&<span key={c.id} className="tag" onClick={()=>setFc(fc===c.id?null:c.id)} style={{color:fc===c.id?"#fff":c.c,background:fc===c.id?c.c:"transparent"}}>{c.l} {byCat[c.id]}</span>)}
+        <div style={{flex:1}}/>
+        <span className="stats">{all.length}条</span>
+        <span className="stats">·</span>
+        <span className="stats-hl">{all.filter(e=>e.take).length}结论</span>
+        <span className="stats">·</span>
+        <span className="stats-todo">{all.filter(e=>e.todo).length}待办</span>
+      </div>
+      <div className="divider"/>
+
+      {/* Entries */}
+      {entries.length===0
+        ?<div className="empty"><p>{fc?"该分类下没有记录":"还没有记录"}</p>{!fc&&<p className="empty-hint">点击「⚡ 生成今日记录」自动从 Screenpipe 生成</p>}</div>
+        :entries.map(e=><Row key={e.id} e={e} onDel={handleDel} onEdit={x=>{setEdit(x);setShowForm(true)}}/>)
+      }
+
+      <button className="fab" onClick={()=>{setEdit(null);setShowForm(true)}}>+</button>
+      {showForm&&<EntryForm init={edit} onSave={handleSave} onCancel={()=>{setShowForm(false);setEdit(null)}}/>}
+      {showSettings&&<SettingsModal cfg={cfg} onSave={saveCfg} onClose={()=>setShowSettings(false)}/>}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("app")).render(<App/>);
+</script>
+</body>
+</html>
