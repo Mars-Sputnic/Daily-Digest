@@ -1,0 +1,23 @@
+{
+  "name": "daily-digest",
+  "version": "1.0.0",
+  "description": "Screenpipe + Claude AI 驱动的每日数字生活知识沉淀工具",
+  "keywords": ["screenpipe", "claude", "ai", "productivity", "knowledge-management", "screen-recording"],
+  "author": "",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/YOUR_USERNAME/daily-digest"
+  },
+  "main": "src/App.jsx",
+  "scripts": {
+    "screenpipe:start": "screenpipe",
+    "screenpipe:health": "curl -s http://localhost:3030/health | python3 -m json.tool",
+    "screenpipe:search": "curl -s 'http://localhost:3030/search?q=&limit=20&content_type=ocr' | python3 -m json.tool",
+    "screenpipe:today": "curl -s \"http://localhost:3030/search?q=&limit=100&start_time=$(date -u +%Y-%m-%dT00:00:00Z)&end_time=$(date -u +%Y-%m-%dT23:59:59Z)&content_type=ocr\" | python3 -m json.tool"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0",
+    "react-dom": ">=18.0.0"
+  }
+}
